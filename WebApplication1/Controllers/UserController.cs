@@ -31,5 +31,17 @@ namespace WebApplication1.Controllers
 
             return CreatedAtAction(nameof(CreateUser), new {id = user.Id }, user);
         }
+
+        [HttpGet]
+        public  IActionResult GetUserById(int id)
+        {
+            var user = _context.Users.Find(id);
+            if (user == null)
+            {
+                return BadRequest(ModelState);
+            }
+
+            return Ok(user);
+        }
     }
 }
