@@ -18,7 +18,6 @@ namespace WebApplication1.Models
 
         public string SenhaHash { get; set; }
 
-        [Required(ErrorMessage = "O campo EquipeId é obrigatório.")]
         public int? EquipeId { get; set; }
         public Equipes? Equipe { get; set; }
 

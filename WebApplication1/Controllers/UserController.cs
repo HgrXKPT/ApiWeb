@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.EntityFrameworkCore;
 using WebApplication1.Data;
 using WebApplication1.Models;
 
@@ -21,27 +22,65 @@ namespace WebApplication1.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateUser([FromBody] Users user)
         {
+            
             if(!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            _context.Add(user);
+            user.SenhaHash = BCrypt.Net.BCrypt.HashPassword(user.SenhaHash);
+                _context.Add(user);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(CreateUser), new {id = user.Id }, user);
         }
 
         [HttpGet]
-        public  IActionResult GetUserById(int id)
+        public async Task<IActionResult> GetUserByEmail(string email)
         {
-            var user = _context.Users.Find(id);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
             if (user == null)
             {
                 return BadRequest(ModelState);
             }
 
             return Ok(user);
+        }
+        [HttpDelete]
+        public IActionResult DeleteUserById(int id)
+        {
+            var user = _context.Users.Find(id);
+        
+            if (user == null)
+            {
+                return NotFound("Usuario não encontrado");
+            }
+
+            _context.Remove(user);
+            _context.SaveChanges();
+
+            return Ok("Usuario removido com sucesso");
+  
+        }
+
+        [HttpPatch]
+        public IActionResult AdicionarMembroNaEquipe(int id, int equipeid)
+        {
+            var user = _context.Users.Find(id);
+
+            if (user != null)
+            {
+                user.EquipeId = equipeid;
+                _context.SaveChanges();
+                return Ok("Usuario adicionado na equipe");
+            }
+            else
+            {
+                return NotFound("Usuario não encontrado");
+            }
+
+                
+            
         }
     }
 }
