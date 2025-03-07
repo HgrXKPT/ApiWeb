@@ -16,7 +16,7 @@ namespace WebApplication1.Models
 
 
         [Required(ErrorMessage = "O Campo de RA é obrigatorio")]
-        public int RA { get; set; }
+        public string RA { get; set; }
 
         [Required(ErrorMessage = "O campo SenhaHash é obrigatório.")]
 

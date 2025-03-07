@@ -25,10 +25,15 @@ namespace WebApplication1.Controllers
             
             if(!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(new {mensagem = "Usuario não identificado"});
             }
+            //gera um RA uníco para cada pessoa
+            user.RA = GerarRA();
 
+            //criptograva a senha
             user.SenhaHash = BCrypt.Net.BCrypt.HashPassword(user.SenhaHash);
+
+
                 _context.Add(user);
             await _context.SaveChangesAsync();
 
@@ -41,10 +46,10 @@ namespace WebApplication1.Controllers
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
             if (user == null)
             {
-                return BadRequest(ModelState);
+                return BadRequest(new {mensagem = "Usuario não encontrado"});
             }
 
-            return Ok(user);
+            return Ok(new { mensagem = "Usuario encotrado"});
         }
         [HttpDelete]
         public IActionResult DeleteUserById(int id)
@@ -63,6 +68,20 @@ namespace WebApplication1.Controllers
   
         }
 
-        
+        public string GerarRA()
+        {
+            string novoRA;
+            do
+            {
+                var anoAtual = DateTime.Now.Year.ToString();
+                var numeroAleatorio = Random.Shared.Next(1000, 9999);
+                novoRA = $"{anoAtual}{numeroAleatorio}";
+            } while (_context.Users.Any(u => u.RA == novoRA));
+
+            return novoRA;
+        }
+
+
+
     }
 }
