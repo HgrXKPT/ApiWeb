@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using WebApplication1.Data;
+using WebApplication1.Dtos.Users;
 using WebApplication1.Models;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -19,21 +20,24 @@ namespace WebApplication1.Controllers
             _context = context;
         }
 
-        [HttpPost]
-        public async Task<IActionResult> CreateUser([FromBody] Users user)
+        [HttpPost("Register")]
+        public async Task<IActionResult> CreateUser([FromBody] CreateUserDto createUserDto)
         {
             
             if(!ModelState.IsValid)
             {
                 return BadRequest(new {mensagem = "Usuario não identificado"});
             }
+
+            var user = new Users { 
+                Nome = createUserDto.Nome,
+                Email = createUserDto.Email,
+                //criptografia da senha
+                SenhaHash = BCrypt.Net.BCrypt.HashPassword(createUserDto.Senha)
+            };
+
             //gera um RA uníco para cada pessoa
             user.RA = GerarRA();
-
-            //criptograva a senha
-            user.SenhaHash = BCrypt.Net.BCrypt.HashPassword(user.SenhaHash);
-
-
                 _context.Add(user);
             await _context.SaveChangesAsync();
 
@@ -68,7 +72,32 @@ namespace WebApplication1.Controllers
   
         }
 
-        public string GerarRA()
+        [HttpPost("Login")]
+        public async Task<IActionResult> LoginUser([FromBody] LoginDto logindto)
+        {
+            if (string.IsNullOrEmpty(logindto.Email) || string.IsNullOrEmpty(logindto.Senha))
+            {
+                return BadRequest(new { mensagem = "O campo de email e senha são obrigatorios" });
+            }
+
+            var usuario = await _context.Users.FirstOrDefaultAsync(u => u.Email == logindto.Email);
+
+            if(usuario == null)
+            {
+                return NotFound(new { mensagem = "Usuário não encontrado" });
+            }
+
+            if (!BCrypt.Net.BCrypt.Verify(logindto.Senha, usuario.SenhaHash))
+            {
+                return Unauthorized(new { mensagem = "Senha inválida" });
+            }
+
+
+            return Ok(new { mensagem = "Login efetuado com sucesso" });
+
+        }
+
+        private string GerarRA()
         {
             string novoRA;
             do
@@ -80,8 +109,5 @@ namespace WebApplication1.Controllers
 
             return novoRA;
         }
-
-
-
     }
 }
