@@ -63,24 +63,6 @@ namespace WebApplication1.Controllers
   
         }
 
-        [HttpPatch]
-        public IActionResult AdicionarMembroNaEquipe(int id, int equipeid)
-        {
-            var user = _context.Users.Find(id);
-
-            if (user != null)
-            {
-                user.EquipeId = equipeid;
-                _context.SaveChanges();
-                return Ok("Usuario adicionado na equipe");
-            }
-            else
-            {
-                return NotFound("Usuario não encontrado");
-            }
-
-                
-            
-        }
+        
     }
 }
