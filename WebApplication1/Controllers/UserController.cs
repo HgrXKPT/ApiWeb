@@ -53,7 +53,10 @@ namespace WebApplication1.Controllers
                 return BadRequest(new {mensagem = "Usuario não encontrado"});
             }
 
-            return Ok(new { mensagem = "Usuario encotrado"});
+            return Ok(new
+            {
+                mensagem = $"Nome:{user.Nome}"
+            });
         }
         [HttpDelete]
         public IActionResult DeleteUserById(int id)
