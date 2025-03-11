@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Server.IIS;
 using Microsoft.EntityFrameworkCore;
 using WebApplication1.Data;
 using WebApplication1.Dtos.Users;
@@ -23,25 +25,37 @@ namespace WebApplication1.Controllers
         [HttpPost("Register")]
         public async Task<IActionResult> CreateUser([FromBody] CreateUserDto createUserDto)
         {
-            
-            if(!ModelState.IsValid)
+
+            if (!ModelState.IsValid)
+            {
+
+            }
+            try
+            {
+                var user = new Users
+                {
+                    Nome = createUserDto.Nome,
+                    Email = createUserDto.Email,
+                    //criptografia da senha
+                    SenhaHash = BCrypt.Net.BCrypt.HashPassword(createUserDto.Senha)
+                };
+
+                //gera um RA uníco para cada pessoa
+                user.RA = GerarRA();
+                _context.Add(user);
+                await _context.SaveChangesAsync();
+
+                return CreatedAtAction(nameof(CreateUser), new
+                {
+                    id = user.Id
+                }, user);
+            }
+            catch (ArgumentException ex)
             {
                 return BadRequest(new {mensagem = "Usuario não identificado"});
             }
 
-            var user = new Users { 
-                Nome = createUserDto.Nome,
-                Email = createUserDto.Email,
-                //criptografia da senha
-                SenhaHash = BCrypt.Net.BCrypt.HashPassword(createUserDto.Senha)
-            };
 
-            //gera um RA uníco para cada pessoa
-            user.RA = GerarRA();
-                _context.Add(user);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(CreateUser), new {id = user.Id }, user);
         }
 
         [HttpGet]
@@ -50,7 +64,10 @@ namespace WebApplication1.Controllers
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
             if (user == null)
             {
-                return BadRequest(new {mensagem = "Usuario não encontrado"});
+                return BadRequest(new
+                {
+                    mensagem = "Usuario não encontrado"
+                });
             }
 
             return Ok(new
@@ -62,7 +79,7 @@ namespace WebApplication1.Controllers
         public IActionResult DeleteUserById(int id)
         {
             var user = _context.Users.Find(id);
-        
+
             if (user == null)
             {
                 return NotFound("Usuario não encontrado");
@@ -72,7 +89,7 @@ namespace WebApplication1.Controllers
             _context.SaveChanges();
 
             return Ok("Usuario removido com sucesso");
-  
+
         }
 
         [HttpPost("Login")]
@@ -80,23 +97,35 @@ namespace WebApplication1.Controllers
         {
             if (string.IsNullOrEmpty(logindto.Email) || string.IsNullOrEmpty(logindto.Senha))
             {
-                return BadRequest(new { mensagem = "O campo de email e senha são obrigatorios" });
+                return BadRequest(new
+                {
+                    mensagem = "O campo de email e senha são obrigatorios"
+                });
             }
 
             var usuario = await _context.Users.FirstOrDefaultAsync(u => u.Email == logindto.Email);
 
-            if(usuario == null)
+            if (usuario == null)
             {
-                return NotFound(new { mensagem = "Usuário não encontrado" });
+                return NotFound(new
+                {
+                    mensagem = "Usuário não encontrado"
+                });
             }
 
             if (!BCrypt.Net.BCrypt.Verify(logindto.Senha, usuario.SenhaHash))
             {
-                return Unauthorized(new { mensagem = "Senha inválida" });
+                return Unauthorized(new
+                {
+                    mensagem = "Senha inválida"
+                });
             }
 
 
-            return Ok(new { mensagem = "Login efetuado com sucesso" });
+            return Ok(new
+            {
+                mensagem = "Login efetuado com sucesso"
+            });
 
         }
 
