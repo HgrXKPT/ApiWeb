@@ -11,9 +11,9 @@ using BCrypt;
 
 namespace WebApplication1.Tests.Controllers
 {
-    public class UserControllersTests
+    public class CreateUserTests
     {
-        [Fact]
+        [Fact(DisplayName = "Create User should return CreatedAtAction")]
         public async Task CreateUser_ShouldReturn_CreatedAtAction_WhenCreated()
         {
             // Arrange
@@ -38,7 +38,7 @@ namespace WebApplication1.Tests.Controllers
             Assert.Equal("Teste@gmail.com", user.Email);
         }
 
-        [Fact]
+        [Fact(DisplayName = "Create User should return BadRequest")]
         public async Task CreateUser_ShouldReturn_BadRequest_WhenCreated()
         {
             var dto = new CreateUserDto
