@@ -7,115 +7,66 @@ using WebApplication1.Dtos.Users;
 using WebApplication1.Models;
 using Xunit;
 using WebApplication1.Utils;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace WebApplication1.Tests.UserControllerTests
 {
     public class LoginUserTests
     {
-        [Fact(DisplayName = "Login User should return Ok")]
-        public async Task LoginUser_ShouldReturn_OK_WhenValidCredentials()
+        [Theory(DisplayName = "Deleted User Should Retorn Not Found")]
+        [InlineData("teste@gmail.com", "12345")]
+        [InlineData("naoexiste@gmail.com", "54321")]
+        [InlineData("", "12345")]
+        [InlineData("teste@gmail.com", "123")]
+        public async Task LoginUser_ShouldReturn_OK_WhenValidCredentials(string email, string senha)
         {
-            
             // Arrange
-            var dto = TestsFunc.CriarDto("teste@gmail.com", "12345");
-
+            var dto = TestsFunc.CriarDto(email, senha);
 
             //database na memoria
             var context = TestsFunc.CriarDbNaMemoria();
 
             await TestsFunc.AddUserToContext(context, "teste@gmail.com", "12345");
 
-            
-
             var controller = new UserController(context);
-
 
             //Act
             var result = await controller.LoginUser(dto);
 
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.NotNull(okResult.Value);
+            switch (result)
+            {
+                case OkObjectResult okResult:
+                    Assert.IsType<OkObjectResult>(result);
+                    Assert.NotNull(okResult.Value);
+                    Assert.Equal("Login efetuado com sucesso", GetMensagem(okResult.Value));
+                    break;
 
-            var responseObject = okResult.Value;
-            Assert.Equal("Login efetuado com sucesso", responseObject.GetType().GetProperty("mensagem")?.GetValue(responseObject, null));
+                case UnauthorizedObjectResult unauthorizedresult:
+                    Assert.IsType<UnauthorizedObjectResult>(result);
+                    Assert.Equal("Senha inválida", GetMensagem(unauthorizedresult.Value));
+                    break;
+
+                case BadRequestObjectResult badRequest:
+                    Assert.IsType<BadRequestObjectResult>(result);
+                    Assert.Equal("O campo de email e senha são obrigatorios", GetMensagem(badRequest.Value));
+                    break;
+                case NotFoundObjectResult notfoundresult:
+                    Assert.IsType<NotFoundObjectResult>(result);
+                    Assert.Equal("Usuário não encontrado", GetMensagem(notfoundresult.Value));
+                    break;
+
+                default:
+                    Assert.True(false, "Resultado inesperado: " + result.GetType().Name);
+                    break;
+            }
         }
 
 
-        [Fact(DisplayName = "Login user should return badrequest")]
-        public async Task LoginUser_ShouldReturn_BadRequest_WhenEmptyField()
+
+        private string? GetMensagem(object? value)
         {
-            //Arranger
-            var dto = TestsFunc.CriarDto("", "1234");
-
-            //crio o database e o contexto
-            var context = TestsFunc.CriarDbNaMemoria();
-
-            var controller = new UserController(context);
-
-            //act
-
-            var result = await controller.LoginUser(dto);
-
-            var okResult = Assert.IsType<BadRequestObjectResult>(result);
-            Assert.Equal("O campo de email e senha são obrigatorios", okResult.Value?.GetType().GetProperty("mensagem")?.GetValue(okResult.Value, null).ToString());
+            return value?.GetType().GetProperty("mensagem")?.GetValue(value, null).ToString();
         }
-
-
-        [Fact(DisplayName = "Login User Should return Not Found")]
-        public async Task LoginUser_ShouldReturn_NotFound_WhenNonExistingUser()
-        {
-            //Arrange
-            var dto = TestsFunc.CriarDto("teste@gmail.com", "123");
-
-            var context = CreateContextNull();
-
-            await TestsFunc.AddUserToContext(context, "teste2@gmail.com", "123");
-
-
-            var controller = new UserController(context);
-
-            var result = await controller.LoginUser(dto);
-
-            var okResult = Assert.IsType<NotFoundObjectResult>(result);
-            Assert.Equal("Usuário não encontrado", okResult.Value?.GetType().GetProperty("mensagem")?.GetValue(okResult.Value, null).ToString());
-        }
-
-        [Fact(DisplayName = "Login user should return unauthorized")]
-        public async Task LoginUser_ShouldReturn_Unauthorized_WhenPasswordDoenstMatch()
-        {
-            //Arrange
-
-            using var context = TestsFunc.CriarDbNaMemoria();
-
-            var dto = TestsFunc.CriarDto("teste@gmail.com", "senha-certa");
-
-
-            
-            await TestsFunc.AddUserToContext(context, "teste@gmail.com", "senha-incorreta");
-
-
-            var controller = new UserController(context);
-
-            //act
-            var result = await controller.LoginUser(dto);
-
-            var UnauthorizedResult = Assert.IsType<UnauthorizedObjectResult>(result);
-
-            Assert.Equal("Senha inválida", UnauthorizedResult.Value?.GetType().GetProperty("mensagem")?.GetValue(UnauthorizedResult.Value,null).ToString());
-
-        }
-
-
-     
-        private AppDbContext CreateContextNull()
-        {
-            var options = new DbContextOptionsBuilder<AppDbContext>()
-                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString()) // Nome único para cada teste
-                .Options;
-
-            return new AppDbContext(options); // Banco de dados vazio
-
-
-        }
+        
     }
 }

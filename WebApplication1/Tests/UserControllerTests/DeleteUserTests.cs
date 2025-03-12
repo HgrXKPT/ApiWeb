@@ -11,19 +11,21 @@ namespace WebApplication1.Tests.UserControllerTests
     {
 
         //Criação de teste para validar o Delete User
-        [Fact(DisplayName = "Deleted User Should Return Ok")]
-        public async Task DeleteUser_ShouldReturn_Ok_WhenDeleted()
+        [Theory(DisplayName = "Deleted User Should Retorn Not Found")]
+        [InlineData("teste@gmail.com", "12345")]
+        [InlineData("naoexiste@gmail.com", "54321")]
+        public async Task DeleteUser_ShouldReturn_Ok_WhenDeleted(string email, string senha)
         {
             //arrange
-            var dto = TestsFunc.CriarDto("teste@gmail.com", "12345");
+
             var context = TestsFunc.CriarDbNaMemoria();
             await TestsFunc.AddUserToContext(context, "teste@gmail.com", "12345");
 
             var controller = new UserController(context);
 
-            var user = await controller.GetUserByEmail(dto.Email);
+            var user = await controller.GetUserByEmail(email);
 
-            //act
+            //Act
             if (user is OkObjectResult okResult)
             {
                 var userId = okResult.Value.GetType().GetProperty("Id")?.GetValue(okResult.Value, null);
@@ -35,26 +37,14 @@ namespace WebApplication1.Tests.UserControllerTests
                 Assert.IsType<OkObjectResult>(result);
 
             }
+            else
+            {
+                var result = await controller.DeleteUserById(-1);
+                Assert.IsType<NotFoundObjectResult>(result);
+            }
 
         }
 
-        //Criação de teste para validar o notfound do Delete User
 
-        [Fact(DisplayName = "Deleted User Should Retorn Not Found")]
-        public async Task DeleteUser_ShouldReturn_NotFound_WhenTryingDeleteNonExistingUser()
-        {
-            //arrange
-            var dto = TestsFunc.CriarDto("higor@gmail.com", "123");
-            var context = TestsFunc.CriarDbNaMemoria();
-            await TestsFunc.AddUserToContext(context, "teste@gmail.com", "12345");
-
-            var controller = new UserController(context);
-            //act
-            var result = await controller.DeleteUserById(-1);
-            //assert
-            Assert.IsType<NotFoundObjectResult>(result);
-
-           
-        }
     }
 }
