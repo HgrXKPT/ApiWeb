@@ -72,21 +72,22 @@ namespace WebApplication1.Controllers
 
             return Ok(new
             {
-                mensagem = $"Nome:{user.Nome}"
+                Id = user.Id,
+                mensagem = $"Nome:{user.Nome} Id: {user.Id}"
             });
         }
         [HttpDelete]
-        public IActionResult DeleteUserById(int id)
+        public async Task<IActionResult> DeleteUserById(int id)
         {
-            var user = _context.Users.Find(id);
+            var user = await _context.Users.FindAsync(id);
 
             if (user == null)
             {
                 return NotFound("Usuario não encontrado");
             }
 
-            _context.Remove(user);
-            _context.SaveChanges();
+             _context.Remove(user);
+            await _context.SaveChangesAsync();
 
             return Ok("Usuario removido com sucesso");
 
