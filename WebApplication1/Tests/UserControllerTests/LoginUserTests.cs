@@ -11,20 +11,16 @@ namespace WebApplication1.Tests.UserControllerTests
     public class LoginUserTests
     {
         [Fact(DisplayName = "Login User should return Ok")]
-        public async Task LoginUser_ShouldReturn_OK_WhenLogged()
+        public async Task LoginUser_ShouldReturn_OK_WhenValidCredentials()
         {
             // Arrange
-            var dto = new LoginDto
-            {
-                Email = "teste@gmail.com",
-                Senha = "123"
-            };
+            var dto = CriarDto("teste@gmail.com", "12345");
 
 
             //database na memoria
             var context = CriarDbNaMemoria();
 
-            await AddUserToContext(context, dto);
+            await AddUserToContext(context, dto, "teste@gmail.com");
 
             await context.SaveChangesAsync();
 
@@ -44,18 +40,13 @@ namespace WebApplication1.Tests.UserControllerTests
 
 
         [Fact(DisplayName = "Login user should return badrequest")]
-        public async Task LoginUser_ShouldReturn_BadRequest_WhenLogged()
+        public async Task LoginUser_ShouldReturn_BadRequest_WhenEmptyField()
         {
             //Arranger
-            var dto = new LoginDto()
-            {
-                Email = "",
-                Senha = "123"
-            };
+            var dto = CriarDto("", "1234");
 
             //crio o database e o contexto
             var context = CriarDbNaMemoria();
-            await AddUserToContext(context, dto);
 
             var controller = new UserController(context);
 
@@ -65,8 +56,36 @@ namespace WebApplication1.Tests.UserControllerTests
 
             var okResult = Assert.IsType<BadRequestObjectResult>(result);
             Assert.Equal("O campo de email e senha são obrigatorios", okResult.Value?.GetType().GetProperty("mensagem")?.GetValue(okResult.Value, null).ToString());
+        }
 
 
+        [Fact(DisplayName = "Login User Should return Not Found")]
+        public async Task LoginUser_ShouldReturn_NotFound_WhenNonExistingUser()
+        {
+            //Arrange
+            var dto = CriarDto("teste@gmail.com", "12345");
+
+            var context = CreateContextNull();
+
+            await AddUserToContext(context, dto, "teste2@gmail.com");
+
+
+            var controller = new UserController(context);
+
+            var result = await controller.LoginUser(dto);
+
+            var okResult = Assert.IsType<NotFoundObjectResult>(result);
+            Assert.Equal("Usuário não encontrado", okResult.Value?.GetType().GetProperty("mensagem")?.GetValue(okResult.Value, null).ToString());
+        }
+
+        private LoginDto CriarDto(string email, string senha)
+        {
+            var dto = new LoginDto()
+            {
+                Email = email,
+                Senha = senha
+            };
+            return dto;
         }
 
         private AppDbContext CriarDbNaMemoria()
@@ -80,14 +99,14 @@ namespace WebApplication1.Tests.UserControllerTests
             return new AppDbContext(options);
         }
 
-        private async Task AddUserToContext(AppDbContext context, LoginDto dto)
+        private async Task AddUserToContext(AppDbContext context, LoginDto dto, string email)
         {
-      
+
 
             context.Add(new Users
             {
                 Nome = "Higor",
-                Email = "teste@gmail.com",
+                Email = email,
                 SenhaHash = BCrypt.Net.BCrypt.HashPassword(dto.Senha),
                 RA = "20254952"
             });
@@ -96,5 +115,15 @@ namespace WebApplication1.Tests.UserControllerTests
 
         }
 
+        private AppDbContext CreateContextNull()
+        {
+            var options = new DbContextOptionsBuilder<AppDbContext>()
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString()) // Nome único para cada teste
+                .Options;
+
+            return new AppDbContext(options); // Banco de dados vazio
+
+
+        }
     }
 }
