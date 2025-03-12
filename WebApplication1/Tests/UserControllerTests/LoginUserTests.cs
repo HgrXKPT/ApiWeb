@@ -6,6 +6,7 @@ using WebApplication1.Data;
 using WebApplication1.Dtos.Users;
 using WebApplication1.Models;
 using Xunit;
+using WebApplication1.Utils;
 
 namespace WebApplication1.Tests.UserControllerTests
 {
@@ -14,16 +15,17 @@ namespace WebApplication1.Tests.UserControllerTests
         [Fact(DisplayName = "Login User should return Ok")]
         public async Task LoginUser_ShouldReturn_OK_WhenValidCredentials()
         {
+            
             // Arrange
-            var dto = CriarDto("teste@gmail.com", "12345");
+            var dto = TestsFunc.CriarDto("teste@gmail.com", "12345");
 
 
             //database na memoria
-            var context = CriarDbNaMemoria();
+            var context = TestsFunc.CriarDbNaMemoria();
 
-            await AddUserToContext(context, "teste@gmail.com", "12345");
+            await TestsFunc.AddUserToContext(context, "teste@gmail.com", "12345");
 
-
+            
 
             var controller = new UserController(context);
 
@@ -43,10 +45,10 @@ namespace WebApplication1.Tests.UserControllerTests
         public async Task LoginUser_ShouldReturn_BadRequest_WhenEmptyField()
         {
             //Arranger
-            var dto = CriarDto("", "1234");
+            var dto = TestsFunc.CriarDto("", "1234");
 
             //crio o database e o contexto
-            var context = CriarDbNaMemoria();
+            var context = TestsFunc.CriarDbNaMemoria();
 
             var controller = new UserController(context);
 
@@ -63,11 +65,11 @@ namespace WebApplication1.Tests.UserControllerTests
         public async Task LoginUser_ShouldReturn_NotFound_WhenNonExistingUser()
         {
             //Arrange
-            var dto = CriarDto("teste@gmail.com", "123");
+            var dto = TestsFunc.CriarDto("teste@gmail.com", "123");
 
             var context = CreateContextNull();
 
-            await AddUserToContext(context, "teste2@gmail.com", "123");
+            await TestsFunc.AddUserToContext(context, "teste2@gmail.com", "123");
 
 
             var controller = new UserController(context);
@@ -83,13 +85,13 @@ namespace WebApplication1.Tests.UserControllerTests
         {
             //Arrange
 
-            using var context = CriarDbNaMemoria();
+            using var context = TestsFunc.CriarDbNaMemoria();
 
-            var dto = CriarDto("teste@gmail.com", "senha-certa");
+            var dto = TestsFunc.CriarDto("teste@gmail.com", "senha-certa");
 
 
-
-            await AddUserToContext(context, "teste@gmail.com", "senha-incorreta");
+            
+            await TestsFunc.AddUserToContext(context, "teste@gmail.com", "senha-incorreta");
 
 
             var controller = new UserController(context);
@@ -104,49 +106,7 @@ namespace WebApplication1.Tests.UserControllerTests
         }
 
 
-        private LoginDto CriarDto(string email, string senha)
-        {
-            
-            var dto = new LoginDto()
-            {
-                Email = email,
-                Senha = senha
-            };
-
-            return dto;
-        }
-
-        private AppDbContext CriarDbNaMemoria()
-        {
-            var options = new DbContextOptionsBuilder<AppDbContext>()
-                    .UseInMemoryDatabase(databaseName: "Testes")
-                    .Options;
-
-            
-
-            return new AppDbContext(options);
-        }
-
-        private async Task AddUserToContext(AppDbContext context, string email, string senha)
-        {
-            var senhahash = BCrypt.Net.BCrypt.HashPassword(senha);
-
-            context.Add(new Users
-            {
-                Nome = "Higor",
-                Email = email,
-                SenhaHash = senhahash,
-                RA = "20254952"
-            });
-
-            Console.WriteLine($"Senha: {senha}, Hash: {senhahash}");
-            Console.WriteLine(BCrypt.Net.BCrypt.Verify(senha, BCrypt.Net.BCrypt.HashPassword(senha)));
-
-
-            await context.SaveChangesAsync();
-
-        }
-
+     
         private AppDbContext CreateContextNull()
         {
             var options = new DbContextOptionsBuilder<AppDbContext>()
