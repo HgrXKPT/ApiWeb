@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Net.Mail;
 using WebApplication1.Controllers;
 using WebApplication1.Data;
 using WebApplication1.Dtos.Users;
@@ -20,7 +21,7 @@ namespace WebApplication1.Tests.UserControllerTests
             //database na memoria
             var context = CriarDbNaMemoria();
 
-            await AddUserToContext(context, dto, "teste@gmail.com");
+            await AddUserToContext(context, "teste@gmail.com", "12345");
 
             await context.SaveChangesAsync();
 
@@ -63,11 +64,11 @@ namespace WebApplication1.Tests.UserControllerTests
         public async Task LoginUser_ShouldReturn_NotFound_WhenNonExistingUser()
         {
             //Arrange
-            var dto = CriarDto("teste@gmail.com", "12345");
+            var dto = CriarDto("teste@gmail.com", "123");
 
             var context = CreateContextNull();
 
-            await AddUserToContext(context, dto, "teste2@gmail.com");
+            await AddUserToContext(context, "teste2@gmail.com", "123");
 
 
             var controller = new UserController(context);
@@ -78,13 +79,50 @@ namespace WebApplication1.Tests.UserControllerTests
             Assert.Equal("Usuário não encontrado", okResult.Value?.GetType().GetProperty("mensagem")?.GetValue(okResult.Value, null).ToString());
         }
 
+        [Fact(DisplayName = "Login user should return unauthorized")]
+        public async Task LoginUser_ShouldReturn_Unauthorized_WhenPasswordDoenstMatch()
+        {
+            //Arrange
+
+            using var context = CriarDbNaMemoria();
+
+            var dto = CriarDto("teste@gmail.com", "senha-certa");
+
+
+
+            context.Add(new Users
+            {
+                Nome = "Joao",
+                Email = dto.Email,
+                SenhaHash = BCrypt.Net.BCrypt.HashPassword("senha-incorreta"),
+                RA = "20254952"
+            });
+
+            await context.SaveChangesAsync();
+
+
+
+
+            var controller = new UserController(context);
+
+            //act
+            var result = await controller.LoginUser(dto);
+
+            var UnauthorizedResult = Assert.IsType<UnauthorizedObjectResult>(result);
+
+            Assert.Equal("Senha inválida", UnauthorizedResult.Value?.GetType().GetProperty("mensagem")?.GetValue(UnauthorizedResult.Value,null).ToString());
+
+        }
+
         private LoginDto CriarDto(string email, string senha)
         {
+            
             var dto = new LoginDto()
             {
                 Email = email,
                 Senha = senha
             };
+
             return dto;
         }
 
@@ -94,22 +132,26 @@ namespace WebApplication1.Tests.UserControllerTests
                     .UseInMemoryDatabase(databaseName: "Testes")
                     .Options;
 
-            ;
+            
 
             return new AppDbContext(options);
         }
 
-        private async Task AddUserToContext(AppDbContext context, LoginDto dto, string email)
+        private async Task AddUserToContext(AppDbContext context, string email, string senha)
         {
-
+            var senhahash = BCrypt.Net.BCrypt.HashPassword(senha);
 
             context.Add(new Users
             {
                 Nome = "Higor",
                 Email = email,
-                SenhaHash = BCrypt.Net.BCrypt.HashPassword(dto.Senha),
+                SenhaHash = senhahash,
                 RA = "20254952"
             });
+
+            Console.WriteLine($"Senha: {senha}, Hash: {senhahash}");
+            Console.WriteLine(BCrypt.Net.BCrypt.Verify(senha, BCrypt.Net.BCrypt.HashPassword(senha)));
+
 
             await context.SaveChangesAsync();
 
