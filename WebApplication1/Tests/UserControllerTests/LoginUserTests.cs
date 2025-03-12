@@ -23,7 +23,6 @@ namespace WebApplication1.Tests.UserControllerTests
 
             await AddUserToContext(context, "teste@gmail.com", "12345");
 
-            await context.SaveChangesAsync();
 
 
             var controller = new UserController(context);
@@ -90,17 +89,7 @@ namespace WebApplication1.Tests.UserControllerTests
 
 
 
-            context.Add(new Users
-            {
-                Nome = "Joao",
-                Email = dto.Email,
-                SenhaHash = BCrypt.Net.BCrypt.HashPassword("senha-incorreta"),
-                RA = "20254952"
-            });
-
-            await context.SaveChangesAsync();
-
-
+            await AddUserToContext(context, "teste@gmail.com", "senha-incorreta");
 
 
             var controller = new UserController(context);
@@ -113,6 +102,7 @@ namespace WebApplication1.Tests.UserControllerTests
             Assert.Equal("Senha inválida", UnauthorizedResult.Value?.GetType().GetProperty("mensagem")?.GetValue(UnauthorizedResult.Value,null).ToString());
 
         }
+
 
         private LoginDto CriarDto(string email, string senha)
         {
