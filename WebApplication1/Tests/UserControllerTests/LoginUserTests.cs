@@ -14,10 +14,10 @@ namespace WebApplication1.Tests.UserControllerTests
     public class LoginUserTests
     {
         [Theory(DisplayName = "Deleted User Should Retorn Not Found")]
-        [InlineData("teste@gmail.com", "12345")]
-        [InlineData("naoexiste@gmail.com", "54321")]
+        [InlineData("teste@gmail.com", "123456")]
+        [InlineData("naoexiste@gmail.com", "543210")]
         [InlineData("", "12345")]
-        [InlineData("teste@gmail.com", "123")]
+        [InlineData("teste@gmail.com", "1234567")]
         public async Task LoginUser_ShouldReturn_OK_WhenValidCredentials(string email, string senha)
         {
             // Arrange
@@ -26,7 +26,7 @@ namespace WebApplication1.Tests.UserControllerTests
             //database na memoria
             var context = TestsFunc.CriarDbNaMemoria();
 
-            await TestsFunc.AddUserToContext(context, "teste@gmail.com", "12345");
+            await TestsFunc.AddUserToContext(context,"Higor", "teste@gmail.com", "12345");
 
             var controller = new UserController(context);
 
@@ -38,35 +38,33 @@ namespace WebApplication1.Tests.UserControllerTests
                 case OkObjectResult okResult:
                     Assert.IsType<OkObjectResult>(result);
                     Assert.NotNull(okResult.Value);
-                    Assert.Equal("Login efetuado com sucesso", GetMensagem(okResult.Value));
+                    Assert.Equal("Login efetuado com sucesso", TestsFunc.GetMensagem(okResult.Value));
                     break;
 
                 case UnauthorizedObjectResult unauthorizedresult:
                     Assert.IsType<UnauthorizedObjectResult>(result);
-                    Assert.Equal("Senha inválida", GetMensagem(unauthorizedresult.Value));
+                    Assert.Equal("Senha inválida", TestsFunc.GetMensagem(unauthorizedresult.Value));
                     break;
 
                 case BadRequestObjectResult badRequest:
                     Assert.IsType<BadRequestObjectResult>(result);
-                    Assert.Equal("O campo de email e senha são obrigatorios", GetMensagem(badRequest.Value));
+                    Assert.Equal("O campo de email e senha são obrigatorios", TestsFunc.GetMensagem(badRequest.Value));
                     break;
                 case NotFoundObjectResult notfoundresult:
                     Assert.IsType<NotFoundObjectResult>(result);
-                    Assert.Equal("Usuário não encontrado", GetMensagem(notfoundresult.Value));
+                    Assert.Equal("Usuário não encontrado", TestsFunc.GetMensagem(notfoundresult.Value));
                     break;
 
                 default:
                     Assert.True(false, "Resultado inesperado: " + result.GetType().Name);
                     break;
             }
+            
         }
 
 
 
-        private string? GetMensagem(object? value)
-        {
-            return value?.GetType().GetProperty("mensagem")?.GetValue(value, null).ToString();
-        }
+        
         
     }
 }

@@ -25,13 +25,26 @@ namespace WebApplication1.Controllers
         [HttpPost("Register")]
         public async Task<IActionResult> CreateUser([FromBody] CreateUserDto createUserDto)
         {
-
-            if (!ModelState.IsValid)
-            {
-
-            }
             try
             {
+                var emailExistente = await _context.Users.AnyAsync(e => e.Email == createUserDto.Email);
+                if (emailExistente)
+                {
+                    return Conflict(new
+                    {
+                        mensagem = "Esse email já está cadastrado"
+                    });
+                }
+
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(new
+                    {
+                        mensagem = "Usuario não identificado"
+                    });
+                }
+                    
+
                 var user = new Users
                 {
                     Nome = createUserDto.Nome,
@@ -39,6 +52,8 @@ namespace WebApplication1.Controllers
                     //criptografia da senha
                     SenhaHash = BCrypt.Net.BCrypt.HashPassword(createUserDto.Senha)
                 };
+
+
 
                 //gera um RA uníco para cada pessoa
                 user.RA = GerarRA();

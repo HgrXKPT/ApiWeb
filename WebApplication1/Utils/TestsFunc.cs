@@ -8,6 +8,11 @@ namespace WebApplication1.Utils
     public class TestsFunc
     {
 
+        public static string? GetMensagem(object? value)
+        {
+            return value?.GetType().GetProperty("mensagem")?.GetValue(value, null).ToString();
+        }
+
         public static LoginDto CriarDto(string email, string senha)
         {
 
@@ -31,13 +36,13 @@ namespace WebApplication1.Utils
             return new AppDbContext(options);
         }
 
-        public static async Task AddUserToContext(AppDbContext context, string email, string senha)
+        public static async Task AddUserToContext(AppDbContext context, string nome, string email, string senha)
         {
             var senhahash = BCrypt.Net.BCrypt.HashPassword(senha);
 
             context.Add(new Users
             {
-                Nome = "Higor",
+                Nome = nome,
                 Email = email,
                 SenhaHash = senhahash,
                 RA = "20254952"

@@ -19,29 +19,30 @@ namespace WebApplication1.Tests.UserControllerTests
             //arrange
 
             var context = TestsFunc.CriarDbNaMemoria();
-            await TestsFunc.AddUserToContext(context, "teste@gmail.com", "12345");
+            await TestsFunc.AddUserToContext(context,"Higor", "teste@gmail.com", "12345");
 
             var controller = new UserController(context);
 
             var user = await controller.GetUserByEmail(email);
-
             //Act
-            if (user is OkObjectResult okResult)
+            switch (user)
             {
-                var userId = okResult.Value.GetType().GetProperty("Id")?.GetValue(okResult.Value, null);
-                Assert.NotNull(userId);
+                case OkObjectResult okResult:
+                    var userId = okResult.Value.GetType().GetProperty("Id")?.GetValue(okResult.Value, null);
+                    Assert.NotNull(userId);
 
-                var result = await controller.DeleteUserById((int)userId);
+                    var okresult = await controller.DeleteUserById((int)userId);
+                    //Assert
+                    Assert.IsType<OkObjectResult>(okresult);
+                    break;
+                default:
 
-                //Assert
-                Assert.IsType<OkObjectResult>(result);
-
+                    var defaultResult = await controller.DeleteUserById(-1);
+                    //Assert
+                    Assert.IsType<NotFoundObjectResult>(defaultResult);
+                    break;
             }
-            else
-            {
-                var result = await controller.DeleteUserById(-1);
-                Assert.IsType<NotFoundObjectResult>(result);
-            }
+            ;
 
         }
 

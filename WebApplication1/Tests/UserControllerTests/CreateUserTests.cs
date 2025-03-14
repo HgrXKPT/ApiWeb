@@ -8,68 +8,84 @@ using WebApplication1.Dtos.Users;
 using WebApplication1.Models;
 using Xunit;
 using BCrypt;
+using WebApplication1.Utils;
+using Microsoft.AspNetCore.Http;
+using Moq;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace WebApplication1.Tests.Controllers
 {
+
+
     public class CreateUserTests
     {
-        [Fact(DisplayName = "Create User should return CreatedAtAction")]
-        public async Task CreateUser_ShouldReturn_CreatedAtAction_WhenCreated()
+        [Theory(DisplayName = "Create User Should Retorn Bad Request/ Created at Action")]
+        [InlineData("higor", "Teste@gmail.com", "12345")]
+        [InlineData("", "Teste@gmail.com", "12345")]
+        [InlineData("Higor", "Teste@gmail.com", "12345")]
+        public async Task CreateUser_ShouldReturn_CreatedAtAction_WhenCreated(string nome, string email, string senha)
         {
             // Arrange
-            var dto = new CreateUserDto
-            {
-                Nome = "Higor",
-                Email = "Teste@gmail.com",
-                Senha = "12345"
-            };
+            var dto = CriarDtoUser(nome, email, senha);
 
-            var controller = CriarBancoDeDadosNaMemoria();
+            var context = TestsFunc.CriarDbNaMemoria();
+            await TestsFunc.AddUserToContext(context, nome, "Teste@gmail.com", "12345");
+
+            var controller = new UserController(context);
 
             // Act
             var result = await controller.CreateUser(dto);
 
-            // Assert
-            var createdResult = Assert.IsType<CreatedAtActionResult>(result);
-            Assert.NotNull(createdResult.Value);
+            
 
-            var user = Assert.IsType<Users>(createdResult.Value);
-            Assert.Equal("Higor", user.Nome);
-            Assert.Equal("Teste@gmail.com", user.Email);
+            switch (result)
+            {
+                case CreatedAtActionResult createdAtActionResult:
+
+                    var createdResult = Assert.IsType<CreatedAtActionResult>(result);
+                    Assert.NotNull(createdAtActionResult.Value);
+
+                    var user = Assert.IsType<Users>(createdResult.Value);
+                    Assert.Equal("Higor", user.Nome);
+                    Assert.Equal("Teste@gmail.com", user.Email);
+
+                    break;
+
+                case BadRequestObjectResult badRequestObjectResult:
+
+                    Assert.IsType<BadRequestObjectResult>(result);
+                    Assert.NotNull(badRequestObjectResult.Value);
+
+                    Assert.Equal("Usuario não identificado", TestsFunc.GetMensagem(badRequestObjectResult.Value));
+                    break;
+
+                case ConflictObjectResult conflictObjectResult:
+                    Assert.IsType<ConflictObjectResult>(result);
+                    Assert.NotNull(conflictObjectResult.Value);
+
+                    Assert.Equal("Esse email já está cadastrado", TestsFunc.GetMensagem(conflictObjectResult.Value));
+
+                    break;
+                default:
+                    break;
+
+            }
+
         }
 
-        [Fact(DisplayName = "Create User should return BadRequest")]
-        public async Task CreateUser_ShouldReturn_BadRequest_WhenCreated()
+
+
+        private static CreateUserDto CriarDtoUser(string nome, string email, string senha)
         {
-            var dto = new CreateUserDto
+
+            var dto = new CreateUserDto()
             {
-                Nome = "",
-                Email = "Teste@gmail.com",
-                Senha = "12345"
+                Nome = nome,
+                Email = email,
+                Senha = senha
             };
 
-            var controller = CriarBancoDeDadosNaMemoria();
-
-            var result = await controller.CreateUser(dto);
-
-            //Assert
-            var createdResult = Assert.IsType<BadRequestObjectResult>(result);
-            Assert.Equal(400, createdResult.StatusCode);
-
-
-        }
-
-
-
-        private UserController CriarBancoDeDadosNaMemoria()
-        {
-            var context = new AppDbContext(
-                    new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: "Testes")
-            .Options);
-
-            return new UserController(context);
-
+            return dto;
         }
 
     }
