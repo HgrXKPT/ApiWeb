@@ -24,20 +24,9 @@ namespace WebApplication1.Tests.UserControllerTests
             var mockService = new Mock<IUserService>();
 
             mockService.Setup(s => s.DeleteUserById(It.IsAny<int>()))
-                .ReturnsAsync((int id) =>
-                {
-                    if (idValid == 1)
-                    {
-                        return new OkObjectResult("Usuario Deletado");
-                    }
-                    else
-                    {
-                        return new NotFoundObjectResult("Usuario Nao encontrado");
-                    }
-
-                }
-
-                );
+                .ReturnsAsync((int id) => id == 1
+                    ? new OkObjectResult("Usuario Deletado")
+                    : new NotFoundObjectResult("Usuario Nao encontrado "));
 
 
             //arrange
@@ -59,7 +48,7 @@ namespace WebApplication1.Tests.UserControllerTests
 
                     break;
                 default:
-
+                    Assert.Fail("Tipo de resultado inesperado.");
                     break;
             }
             ;

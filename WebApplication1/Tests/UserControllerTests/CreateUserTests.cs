@@ -43,18 +43,17 @@ namespace WebApplication1.Tests.Controllers
                 .ReturnsAsync((CreateUserDto dto) =>
                 {
                     if (string.IsNullOrEmpty(dto.Nome) || string.IsNullOrEmpty(dto.Email))
-                    {
+
                         return new BadRequestObjectResult("Campo nome ou email vazio");
-                    }
+
                     if (dto.Email == "TesteConflito@gmail.com")
-                    {
+
                         return new ConflictObjectResult("Usuario já cadastrado");
-                    }
-                    if (!string.IsNullOrEmpty(dto.Nome) || !string.IsNullOrEmpty(dto.Email) || !string.IsNullOrEmpty(dto.Senha))
-                    {
-                        return new CreatedAtActionResult("GetUser", "Users", new { id = 1 }, new Users { Nome = dto.Nome, Email = dto.Email, SenhaHash = dto.Senha });
-                    }
-                    throw new InvalidOperationException("Erro inesperado: os dados fornecidos não correspondem a nenhum cenário definido.");
+
+                    return !string.IsNullOrEmpty(dto.Nome) || !string.IsNullOrEmpty(dto.Email) || !string.IsNullOrEmpty(dto.Senha)
+
+                        ? new CreatedAtActionResult("GetUser", "Users", new { id = 1 }, new Users { Nome = dto.Nome, Email = dto.Email, SenhaHash = dto.Senha })
+                        : throw new InvalidOperationException("Erro inesperado: os dados fornecidos não correspondem a nenhum cenário definido.");
                 }
 
             );
