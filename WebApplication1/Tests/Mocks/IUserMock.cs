@@ -13,6 +13,7 @@ namespace WebApplication1.Models
         Task<IActionResult> CreateUser(CreateUserDto dto);
         Task<IActionResult> DeleteUserById(int id);
         Task<Users?> GetUserByEmail(string email);
+        Task<IActionResult> LoginUser(LoginDto dto);
     }
 
 
