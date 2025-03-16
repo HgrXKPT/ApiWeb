@@ -11,6 +11,8 @@ namespace WebApplication1.Models
     public interface IUserService
     {
         Task<IActionResult> CreateUser(CreateUserDto dto);
+        Task<IActionResult> DeleteUserById(int id);
+        Task<Users?> GetUserByEmail(string email);
     }
 
 

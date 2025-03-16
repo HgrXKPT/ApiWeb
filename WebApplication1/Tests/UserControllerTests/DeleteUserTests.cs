@@ -1,6 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
+using Moq;
 using System.Formats.Asn1;
 using WebApplication1.Controllers;
+using WebApplication1.Dtos.Users;
 using WebApplication1.Models;
 using WebApplication1.Utils;
 using Xunit;
@@ -12,34 +16,50 @@ namespace WebApplication1.Tests.UserControllerTests
 
         //Criação de teste para validar o Delete User
         [Theory(DisplayName = "Deleted User Should Retorn Not Found")]
-        [InlineData("teste@gmail.com", "12345")]
-        [InlineData("naoexiste@gmail.com", "54321")]
-        public async Task DeleteUser_ShouldReturn_Ok_WhenDeleted(string email, string senha)
+        [InlineData("teste@gmail.com", "12345", 1)]
+        [InlineData("naoexiste@gmail.com", "54321", 0)]
+        public async Task DeleteUser_ShouldReturn_Ok_WhenDeleted(string email, string senha, int idValid)
         {
+
+            var mockService = new Mock<IUserService>();
+
+            mockService.Setup(s => s.DeleteUserById(It.IsAny<int>()))
+                .ReturnsAsync((int id) =>
+                {
+                    if (idValid == 1)
+                    {
+                        return new OkObjectResult("Usuario Deletado");
+                    }
+                    else
+                    {
+                        return new NotFoundObjectResult("Usuario Nao encontrado");
+                    }
+
+                }
+
+                );
+
+
             //arrange
 
-            var context = TestsFunc.CriarDbNaMemoria();
-            await TestsFunc.AddUserToContext(context,"Higor", "teste@gmail.com", "12345");
-
-            var controller = new UserController(context);
-
-            var user = await controller.GetUserByEmail(email);
+            var user = await mockService.Object.DeleteUserById(idValid);
             //Act
             switch (user)
             {
                 case OkObjectResult okResult:
-                    var userId = okResult.Value.GetType().GetProperty("Id")?.GetValue(okResult.Value, null);
-                    Assert.NotNull(userId);
 
-                    var okresult = await controller.DeleteUserById((int)userId);
-                    //Assert
-                    Assert.IsType<OkObjectResult>(okresult);
+                    Assert.IsType<OkObjectResult>(okResult);
+                    Assert.Equal("Usuario Deletado", okResult.Value);
+                    break;
+
+                case NotFoundObjectResult notFound:
+
+                    Assert.IsType<NotFoundObjectResult>(notFound);
+                    Assert.Equal("Usuario Nao encontrado", notFound.Value);
+
                     break;
                 default:
 
-                    var defaultResult = await controller.DeleteUserById(-1);
-                    //Assert
-                    Assert.IsType<NotFoundObjectResult>(defaultResult);
                     break;
             }
             ;
