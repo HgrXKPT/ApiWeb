@@ -17,7 +17,7 @@ namespace WebApplication1.Controllers
             _context = context;
         }
 
-        [HttpPost]
+        [HttpPost("Registrar Equipe")]
         public IActionResult CadastrarEquipe([FromBody] Equipes equipes)
         {
             if (!ModelState.IsValid)
@@ -68,5 +68,7 @@ namespace WebApplication1.Controllers
             }
 
         }
+
+
     }
 }
