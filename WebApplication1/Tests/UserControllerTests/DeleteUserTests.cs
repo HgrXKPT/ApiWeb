@@ -26,7 +26,7 @@ namespace WebApplication1.Tests.UserControllerTests
             mockService.Setup(s => s.DeleteUserById(It.IsAny<int>()))
                 .ReturnsAsync((int id) => id == 1
                     ? new OkObjectResult("Usuario Deletado")
-                    : new NotFoundObjectResult("Usuario Nao encontrado "));
+                    : new NotFoundObjectResult("Usuario Nao encontrado"));
 
 
             //arrange

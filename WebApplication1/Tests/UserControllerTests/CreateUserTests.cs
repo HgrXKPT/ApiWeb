@@ -52,7 +52,15 @@ namespace WebApplication1.Tests.Controllers
 
                     return !string.IsNullOrEmpty(dto.Nome) || !string.IsNullOrEmpty(dto.Email) || !string.IsNullOrEmpty(dto.Senha)
 
-                        ? new CreatedAtActionResult("GetUser", "Users", new { id = 1 }, new Users { Nome = dto.Nome, Email = dto.Email, SenhaHash = dto.Senha })
+                        ? new CreatedAtActionResult
+                        ("GetUser", 
+                        "Users", 
+                        new { id = 1 }, 
+                        new Users { 
+                            Nome = dto.Nome, 
+                            Email = dto.Email, 
+                            SenhaHash = dto.Senha 
+                        })
                         : throw new InvalidOperationException("Erro inesperado: os dados fornecidos não correspondem a nenhum cenário definido.");
                 }
 
@@ -68,9 +76,9 @@ namespace WebApplication1.Tests.Controllers
             switch (result)
             {
                 case CreatedAtActionResult createdAtActionResult:
-                    Assert.IsType<Users>(createdAtActionResult.Value);
-                    Assert.NotNull(createdAtActionResult.Value);
                     var user = Assert.IsType<Users>(createdAtActionResult.Value);
+                    Assert.NotNull(createdAtActionResult.Value);
+                    
                     Assert.Equal("Higor", user.Nome);
                     Assert.Equal("Teste@gmail.com", user.Email);
                     break;

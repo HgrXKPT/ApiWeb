@@ -26,24 +26,24 @@ namespace WebApplication1.Models
             }
         }
         [Required(ErrorMessage = "É obrigatório informar a quantidade de membros na equipe")]
-        public int QuantidadeMembros
+        public int? QuantidadeMembros
         {
             get => _quantidadeMembros;
             set
             {
                 ValidarQuantidadeNegativa(value, "A quantidade de membros não pode ser negativa.");
-                _quantidadeMembros = value;
+                _quantidadeMembros = value ?? 0;
             }
         }
 
         [Required(ErrorMessage = "É obrigatório informar a quantidade de projetos da equipe")]
-        public int QuantidadeProjetos
+        public int? QuantidadeProjetos
         {
             get => _quantidadeProjetos;
             set
             {
                 ValidarQuantidadeNegativa(value, "A quantidade de projetos não pode ser negativa.");
-                _quantidadeProjetos = value;
+                _quantidadeProjetos = value ?? 0;
             }
         }
 
@@ -57,9 +57,9 @@ namespace WebApplication1.Models
             get; set;
         }
 
-        private void ValidarQuantidadeNegativa(int valor, string mensagem)
+        private void ValidarQuantidadeNegativa(int? valor, string mensagem)
         {
-            if(valor < 0){
+            if(valor.HasValue && valor < 0){
                 throw new ArgumentException(mensagem);
             }
         }
